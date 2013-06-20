@@ -21,6 +21,8 @@
 			var line_end = "\n\n";
 			var output_string = "";
 			var url_aliases = [];
+			
+			var in_pre = 0;
 
 			//Close off any multiline constructs
 			function close_multiline(is_closed){
@@ -185,7 +187,7 @@
 
 			function set_contents(item){
 
-				var entity_dictionary = {"'":"&#8217;"," - ":" &#8211; ","--":"&#8212;"," x ":" &#215; ","\\.\\.\\.":"&#8230;","\\(C\\)":"&#169;","\\(R\\)":"&#174;","\\(TM\\)":"&#8482;"};
+				var entity_dictionary = {"'":"’"," - ":" – ","--":"—"," x ":" × ","\\.\\.\\.":"…","\\(C\\)":"©","\\(R\\)":"®","\\(TM\\)":"™"};
 				var tag_dictionary = {"b":"\\*\\*","i":"__","em":"_","strong":"\\*","cite":"\\?\\?","sup":"\\^","sub":"~","span":"\\%","code":"@","ins":"\\+","del":"-"};
 
 				//For each entity in the entity dictionary replace
@@ -227,7 +229,7 @@
 
 				//Set the double quotes
 				item = item.replace(/(=)?"([^\"]+)"/g,function($0,$1,$2){
-					return ($1)?$0:"&#8220;"+$2+"&#8221;";
+					return ($1)?$0:"“"+$2+"”";
 				});
 
 				return item;
@@ -267,6 +269,29 @@
 				for(i=0;i<lines.length;i++) {
 
 					var this_item = "";
+
+					if(in_pre !== 0)
+					{
+						if (lines[i].indexOf("</pre>") === 0) // @TODO checking if lines starts with sth using indexOf is suboptimal
+						{
+							in_pre = 0;
+							output_string += lines[i];
+						}
+						else
+						{
+							output_string += htmlspecialchars(lines[i])+"\n";
+						}
+						
+						continue;
+					}
+					
+					if (lines[i].indexOf("<pre") === 0) // @TODO checking if lines starts with sth using indexOf is suboptimal
+					{
+						in_pre = 1;
+						output_string += lines[i];
+						
+						continue;
+					}
 
 					//If there is a [ at index 0 then skip this loop because it assumed to be a URL alias.
 					if (lines[i].indexOf("[") === 0){
